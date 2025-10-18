@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Code IDE</title>
+    <link rel="stylesheet" href="./output.css">
+    <link rel="stylesheet" href="./input.css">
+    <style>
+        body {
+            font-family: 'THSarabunNew', sans-serif;
+        }
+        .toolbox-panel, .file-tabs-container {
+            scrollbar-width: thin;
+            scrollbar-color: #a0aec0 #edf2f7;
+        }
+        html.dark .toolbox-panel, html.dark .file-tabs-container {
+             scrollbar-color: #4a5568 #2d3748;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 1.5s linear infinite;
+        }
+    </style>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <header class="bg-gray-800 text-white shadow-lg sticky top-0 z-10">
+        <div class="container mx-auto p-3 flex justify-between items-center">
+            <div class="w-48 flex items-center gap-2">
+                <label for="portSelector" class="text-sm font-medium text-gray-300 flex-shrink-0">PORT:</label>
+                <select id="portSelector" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2">
+                    <option value="">Scanning...</option>
+                    </select>
+            </div>
+
+            <h1 class="text-xl md:text-2xl font-bold tracking-wider text-center">🤖 Mini IDE [PTBOT-Middle-Edition]</h1>
+            
+            <div class="w-48 flex justify-end"> <button id="theme-toggle" type="button" class="text-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-700 dark:focus:ring-gray-600 rounded-lg text-sm p-2.5">
+                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm-.707 10.607a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707-.707a1 1 0 01-1.414 0zM3 11a1 1 0 100 2h1a1 1 0 100-2H3z" fill-rule="evenodd"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 lg:p-6">
+        
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md mb-6">
+            <h2 class="text-lg font-semibold mb-3 text-gray-600 dark:text-gray-300">File Tabs</h2>
+            <div id="fileTabs" class="flex items-center gap-2 overflow-x-auto pb-2 file-tabs-container">
+                </div>
+        </div>
+
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex-grow flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 id="codeOutputHeader" class="text-xl font-semibold">Code Output</h2>
+                        <button id="saveButton" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:bg-blue-300">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save" viewBox="0 0 16 16">
+                                <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l-2.146-2.147a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 .708.708L7.5 9.207V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+                            </svg>
+                            Save Code
+                        </button>
+                    </div>
+                    <textarea 
+                        id="codeOutput" 
+                        placeholder="คลิกที่แท็บไฟล์ด้านบนเพื่อโหลดโค้ด หรือเริ่มสร้างโค้ดใหม่..."
+                        class="w-full flex-grow border border-gray-300 dark:border-gray-600 rounded-lg p-4 font-mono text-sm bg-gray-50 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
+                    ></textarea>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold">Upload & Log Console</h2>
+                        <button id="uploadButton" class="bg-sky-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-600 transition flex items-center justify-center gap-2 disabled:bg-sky-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-arrow-up" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+                                <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                            </svg>
+                            Upload Code
+                        </button>
+                    </div>
+                    <div id="logContainer" class="w-full h-32 bg-gray-900 text-white rounded-lg p-3 font-mono text-xs overflow-y-auto">
+                        <div id="loadingSpinner" class="hidden items-center gap-3 text-yellow-400 mb-2">
+                             <svg class="animate-spin-slow h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>กำลังอัปโหลด...</span>
+                        </div>
+                        <div id="logOutput">
+                            <p class="text-gray-400">[LOG] Messages will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-6 overflow-y-auto max-h-[85vh] toolbox-panel">
+                
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">⚙️ ตั้งค่า (FF/BB)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="speedInput" class="block text-sm font-medium text-gray-600 dark:text-gray-300">ความเร็ว FF/BB :</label>
+                            <input type="number" id="speedInput" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm" placeholder="ความเร็ว">
+                        </div>
+                        <div class="border-t dark:border-gray-700 pt-4">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">ระยะทางเฉพาะ FF/BB :</p>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                                <div>
+                                    <label for="delayX1Input" class="block text-xs text-gray-500 dark:text-gray-400">ระยะทางช่องที่ 1 :</label>
+                                    <input type="number" id="delayX1Input" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm" placeholder="ช่องที่ 1">
+                                </div>
+                                <div>
+                                    <label for="delayX2Input" class="block text-xs text-gray-500 dark:text-gray-400">ระยะทางช่องที่ 2 :</label>
+                                    <input type="number" id="delayX2Input" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm" placeholder="ช่องที่ 2">
+                                </div>
+                                <div>
+                                    <label for="delayX3Input" class="block text-xs text-gray-500 dark:text-gray-400">ระยะทางช่องที่ 3 :</label>
+                                    <input type="number" id="delayX3Input" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm" placeholder="ช่องที่ 3">
+                                </div>
+                                <div>
+                                    <label for="delayX4Input" class="block text-xs text-gray-500 dark:text-gray-400">ระยะทางช่องที่ 4 :</label>
+                                    <input type="number" id="delayX4Input" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm" placeholder="ช่องที่ 4">
+                                </div>
+                            </div>
+                        </div>
+                        <button id="setDefaultButton" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow-sm">บันทึกค่า FF/BB</button>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-indigo-600 dark:text-indigo-400">⚙️ ตั้งค่า (SetFront / SetBack)</h3>
+                    <div class="space-y-3">
+                        <input type="number" id="setFrontBackValue1" placeholder="ค่าที่ 1 (เช่น 35)" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md">
+                        <input type="number" id="setFrontBackValue2" placeholder="ค่าที่ 2 (เช่น 100)" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md">
+                        <button id="saveSetFrontBackButton" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow-sm">บันทึกค่า SetFront/Back</button>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">🔴 คำสั่งทั่วไป</h3>
+                    <div class="space-y-3">
+                        <button id="stopButton" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">STOP()</button>
+                        <div class="flex items-center gap-2">
+                           <input type="number" id="delayValueInput" placeholder="ค่าดีเลย์ (ms)" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md">
+                           <button id="delayButton" class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">delay(...)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">➕ Add-ons for FF / BB</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="optionalDirectionFFBB" class="block text-sm font-medium text-gray-600 dark:text-gray-300">ทิศทาง (ตัวเลือก)</label>
+                            <select id="optionalDirectionFFBB" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm">
+                                <option value="">-- ไม่มี --</option>
+                                <option value="'L'">L ซ้าย</option>
+                                <option value="'R'">R ขวา</option>
+                                <option value="'l'">l ซ้าย (เลี้ยว)</option>
+                                <option value="'r'">r ขวา (เลี้ยว)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="optionalNumberFFBB" class="block text-sm font-medium text-gray-600 dark:text-gray-300">ค่าตัวเลข</label>
+                            <input type="number" id="optionalNumberFFBB" placeholder="เช่น 100" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">⏩ FF / BB (...)</h3>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button id="ffx1Button" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition text-sm">FF(x1)</button>
+                        <button id="ffx2Button" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition text-sm">FF(x2)</button>
+                        <button id="ffx3Button" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition text-sm">FF(x3)</button>
+                        <button id="ffx4Button" class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition text-sm">FF(x4)</button>
+                        <button id="bbx1Button" class="bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-700 transition text-sm">BB(x1)</button>
+                        <button id="bbx2Button" class="bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-700 transition text-sm">BB(x2)</button>
+                        <button id="bbx3Button" class="bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-700 transition text-sm">BB(x3)</button>
+                        <button id="bbx4Button" class="bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-700 transition text-sm">BB(x4)</button>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">➕ Add-ons for SetFront / SetBack</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="optionalDirectionSet" class="block text-sm font-medium text-gray-600 dark:text-gray-300">ทิศทาง (ตัวเลือก)</label>
+                            <select id="optionalDirectionSet" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm">
+                                <option value="">-- ไม่มี --</option>
+                                <option value="'L'">L ซ้าย</option>
+                                <option value="'R'">R ขวา</option>
+                                <option value="'l'">l ซ้าย (เลี้ยว)</option>
+                                <option value="'r'">r ขวา (เลี้ยว)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="optionalNumberSet" class="block text-sm font-medium text-gray-600 dark:text-gray-300">ค่าตัวเลข</label>
+                            <input type="number" id="optionalNumberSet" placeholder="เช่น 100" class="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">🎛️ สร้างโค้ด (ใช้ค่าที่บันทึก)</h3>
+                    <div class="space-y-3">
+                        <button id="setFrontButton" class="w-full bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition">SetFront(...)</button>
+                        <button id="setBackButton" class="w-full bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition">SetBack(...)</button>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">🔄 หมุน (Spin/Turn)</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="spinLeftButton" class="col-span-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 transition text-sm">หมุนซ้าย</button>
+                        <button id="spinRightButton" class="col-span-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 transition text-sm">หมุนขวา</button>
+                        <button id="turnFrontLeftButton" class="col-span-1 bg-violet-500 text-white py-2 rounded-lg hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700 transition text-sm">เลี้ยวหน้าซ้าย</button>
+                        <button id="turnFrontRightButton" class="col-span-1 bg-violet-500 text-white py-2 rounded-lg hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700 transition text-sm">เลี้ยวหน้าขวา</button>
+                        <button id="turnBackLeftButton" class="col-span-1 bg-fuchsia-500 text-white py-2 rounded-lg hover:bg-fuchsia-600 dark:bg-fuchsia-600 dark:hover:bg-fuchsia-700 transition text-sm">เลี้ยวหลังซ้าย</button>
+                        <button id="turnBackRightButton" class="col-span-1 bg-fuchsia-500 text-white py-2 rounded-lg hover:bg-fuchsia-600 dark:bg-fuchsia-600 dark:hover:bg-fuchsia-700 transition text-sm">เลี้ยวหลังขวา</button>
+                    </div>
+                </div>
+
+                <div class="tool-section border-b dark:border-gray-700 pb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-pink-600 dark:text-pink-400">🫳 ควบคุมการปล่อย (Drop)</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="dropFButton" class="w-full bg-pink-500 text-white py-2 rounded-lg hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 transition">DropF()</button>
+                        <button id="dropBButton" class="w-full bg-pink-500 text-white py-2 rounded-lg hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 transition">DropB()</button>
+                    </div>
+                </div>
+
+                <div class="tool-section pt-2">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">▶️ ควบคุม</h3>
+                     <div class="space-y-3">
+                        <button id="copyButton" class="w-full bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 transition flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                            คัดลอกโค้ด
+                        </button>
+                        <button id="clearButton" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                            ล้างทั้งหมด
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <footer class="bg-white dark:bg-gray-800 rounded-lg shadow m-4">
+        <div class="w-full mx-auto max-w-screen-xl p-4 md:flex md:items-center md:justify-between">
+          <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© 2025 Mini IDE. All Rights Reserved.
+        </span>
+        <ul class="flex flex-wrap items-center mt-3 text-sm font-medium text-gray-500 dark:text-gray-400 sm:mt-0">
+            <li>
+                <span class="me-4 md:me-6">Developed by:</span>
+            </li>
+            <li>
+                <a href="https://kateaw.nbwl.ac.th" target="_blank" class="hover:underline text-blue-600 font-bold">Kateaw</a>
+            </li>
+        </ul>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const serverUrl = 'http://localhost:3000'; // Server URL
+
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+            function setTheme(isDark) {
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    themeToggleLightIcon.classList.remove('hidden');
+                    themeToggleDarkIcon.classList.add('hidden');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggleLightIcon.classList.add('hidden');
+                    themeToggleDarkIcon.classList.remove('hidden');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+            
+            const isInitiallyDark = document.documentElement.classList.contains('dark');
+            setTheme(isInitiallyDark);
+
+            themeToggleBtn.addEventListener('click', () => {
+                setTheme(!document.documentElement.classList.contains('dark'));
+            });
+
+            const portSelector = document.getElementById('portSelector');
+            const codeOutput = document.getElementById('codeOutput');
+            const codeOutputHeader = document.getElementById('codeOutputHeader');
+            const saveButton = document.getElementById('saveButton');
+            const speedInput = document.getElementById('speedInput');
+            const delayX1Input = document.getElementById('delayX1Input');
+            const delayX2Input = document.getElementById('delayX2Input');
+            const delayX3Input = document.getElementById('delayX3Input');
+            const delayX4Input = document.getElementById('delayX4Input');
+            const setDefaultButton = document.getElementById('setDefaultButton');
+            
+            const stopButton = document.getElementById('stopButton');
+            const delayValueInput = document.getElementById('delayValueInput');
+            const delayButton = document.getElementById('delayButton');
+            
+            const optionalDirectionFFBB = document.getElementById('optionalDirectionFFBB');
+            const optionalNumberFFBB = document.getElementById('optionalNumberFFBB');
+            const optionalDirectionSet = document.getElementById('optionalDirectionSet');
+            const optionalNumberSet = document.getElementById('optionalNumberSet');
+
+            const setFrontBackValue1 = document.getElementById('setFrontBackValue1');
+            const setFrontBackValue2 = document.getElementById('setFrontBackValue2');
+            const saveSetFrontBackButton = document.getElementById('saveSetFrontBackButton');
+            
+            const setFrontButton = document.getElementById('setFrontButton');
+            const setBackButton = document.getElementById('setBackButton');
+            
+            const ffx1Button = document.getElementById('ffx1Button');
+            const ffx2Button = document.getElementById('ffx2Button');
+            const ffx3Button = document.getElementById('ffx3Button');
+            const ffx4Button = document.getElementById('ffx4Button');
+            const bbx1Button = document.getElementById('bbx1Button');
+            const bbx2Button = document.getElementById('bbx2Button');
+            const bbx3Button = document.getElementById('bbx3Button');
+            const bbx4Button = document.getElementById('bbx4Button');
+
+            const spinLeftButton = document.getElementById('spinLeftButton');
+            const spinRightButton = document.getElementById('spinRightButton');
+            const turnFrontLeftButton = document.getElementById('turnFrontLeftButton');
+            const turnFrontRightButton = document.getElementById('turnFrontRightButton');
+            const turnBackLeftButton = document.getElementById('turnBackLeftButton');
+            const turnBackRightButton = document.getElementById('turnBackRightButton');
+            
+            const dropFButton = document.getElementById('dropFButton');
+            const dropBButton = document.getElementById('dropBButton');
+
+            const copyButton = document.getElementById('copyButton');
+            const clearButton = document.getElementById('clearButton');
+
+            const uploadButton = document.getElementById('uploadButton');
+            const logOutput = document.getElementById('logOutput');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            const fileTabsContainer = document.getElementById('fileTabs');
+
+            let activeFilename = null; 
+            let savedSpeed = speedInput.value;
+            let savedDelayX1 = delayX1Input.value;
+            let savedDelayX2 = delayX2Input.value;
+            let savedDelayX3 = delayX3Input.value;
+            let savedDelayX4 = delayX4Input.value;
+            
+            let savedSetFrontBackVal1 = setFrontBackValue1.value;
+            let savedSetFrontBackVal2 = setFrontBackValue2.value;
+
+            function getOptionalParamsFFBB() {
+                const dir = optionalDirectionFFBB.value;
+                const num = optionalNumberFFBB.value;
+                let params = '';
+                if (dir) params += `, ${dir}`;
+                if (num) params += `, ${num}`;
+                return params;
+            }
+            
+            function getOptionalParamsSet() {
+                const dir = optionalDirectionSet.value;
+                const num = optionalNumberSet.value;
+                let params = '';
+                if (dir) params += `, ${dir}`;
+                if (num) params += `, ${num}`;
+                return params;
+            }
+
+            function appendCode(command) {
+                if (!activeFilename) {
+                    const currentCode = codeOutput.value;
+                    codeOutput.value = currentCode + (currentCode ? '\n' : '') + command;
+                    logMessage("Command appended. Open a file to insert into a function.", "info");
+                    return;
+                }
+
+                const funcName = activeFilename.replace('.ino', '').replace(/^_/, '').replace(/^[A-Z]\./, '');
+                const fullText = codeOutput.value;
+                
+                const regex = new RegExp(`(void\\s+${funcName}\\s*\\(\\s*\\)\\s*\\{)([\\s\\S]*?)(\\})`);
+                const match = fullText.match(regex);
+
+                if (match) {
+                    const functionStart = match[1];
+                    let functionContent = match[2];
+                    const functionEnd = match[3];
+
+                    const indentedCommand = '  ' + command;
+
+                    functionContent = functionContent.trimEnd();
+                    const newContent = functionContent + (functionContent ? '\n' : '\n') + indentedCommand;
+                    
+                    codeOutput.value = fullText.replace(regex, functionStart + newContent + '\n' + functionEnd);
+                    logMessage(`Appended '${command}' to ${funcName}()`, 'success');
+                } else {
+                    logMessage(`Function '${funcName}' not found. Appending to end of file.`, 'error');
+                    const currentCode = codeOutput.value;
+                    codeOutput.value = currentCode + (currentCode ? '\n' : '') + command;
+                }
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+            }
+
+            function logMessage(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const p = document.createElement('p');
+                let typeColor = 'text-gray-400 dark:text-gray-400';
+                if (type === 'success') typeColor = 'text-green-500 dark:text-green-400';
+                if (type === 'error') typeColor = 'text-red-500 dark:text-red-400';
+                p.innerHTML = `<span class="text-gray-500 dark:text-gray-500">${timestamp}:</span> <span class="${typeColor}">${message}</span>`;
+                logOutput.appendChild(p);
+                logOutput.parentElement.scrollTop = logOutput.parentElement.scrollHeight;
+            }
+            
+            async function fetchAndPopulatePorts() {
+                try {
+                    const response = await fetch(`${serverUrl}/api/ports`);
+                    if (!response.ok) throw new Error('Failed to fetch ports');
+                    
+                    const ports = await response.json();
+                    portSelector.innerHTML = '';
+
+                    if (ports.length === 0) {
+                        portSelector.innerHTML = '<option value="">No ports found</option>';
+                    } else {
+                        ports.forEach(port => {
+                            const option = document.createElement('option');
+                            option.value = port;
+                            option.textContent = port;
+                            portSelector.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching ports:', error);
+                    portSelector.innerHTML = '<option value="">Error</option>';
+                    logMessage('Could not detect serial ports.', 'error');
+                }
+            }
+
+            async function loadFilesFromServer() {
+                try {
+                    const response = await fetch(`${serverUrl}/files`);
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    const filenames = await response.json();
+                    createFileTabs(filenames);
+                } catch (error) {
+                    console.error("Could not fetch file list from server:", error);
+                    logMessage("Error: Could not connect to the server.", "error");
+                }
+            }
+
+            function createFileTabs(filenames) {
+                fileTabsContainer.innerHTML = '';
+                filenames.forEach(filename => {
+                    const tab = document.createElement('button');
+                    tab.textContent = filename;
+                    tab.dataset.filename = filename;
+                    tab.className = 'file-tab flex-shrink-0 px-4 py-2 text-sm font-medium border rounded-md cursor-pointer transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600';
+                    tab.addEventListener('click', handleTabClick);
+                    fileTabsContainer.appendChild(tab);
+                });
+            }
+
+            async function handleTabClick(event) {
+                const clickedTab = event.target;
+                const filename = clickedTab.dataset.filename;
+                
+                if (activeFilename === filename) return;
+
+                activeFilename = filename; 
+                
+                document.querySelectorAll('.file-tab').forEach(tab => {
+                    tab.classList.remove('bg-blue-600', 'text-white', 'border-blue-600', 'dark:bg-blue-500', 'dark:border-blue-500');
+                    tab.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+                });
+                clickedTab.classList.add('bg-blue-600', 'text-white', 'border-blue-600', 'dark:bg-blue-500', 'dark:border-blue-500');
+                clickedTab.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-200');
+
+                try {
+                    const response = await fetch(`${serverUrl}/files/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Server error! status: ${response.status}`);
+                    }
+                    const fileContent = await response.text();
+                    codeOutput.value = fileContent;
+                    codeOutputHeader.textContent = `Code Output (${filename})`;
+                    logMessage(`File '${filename}' loaded successfully.`, 'success');
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    codeOutput.value = `// ไม่สามารถโหลดไฟล์ ${filename} ได้`;
+                    codeOutputHeader.textContent = `Error Loading File`;
+                    logMessage(`Error loading file '${filename}'.`, 'error');
+                }
+            }
+
+            setDefaultButton.addEventListener('click', () => {
+                savedSpeed = speedInput.value || '0';
+                savedDelayX1 = delayX1Input.value || '0';
+                savedDelayX2 = delayX2Input.value || '0';
+                savedDelayX3 = delayX3Input.value || '0';
+                savedDelayX4 = delayX4Input.value || '0';
+                
+                const originalText = setDefaultButton.textContent;
+                setDefaultButton.textContent = 'บันทึกสำเร็จ!';
+                setDefaultButton.classList.add('bg-green-700');
+                setTimeout(() => {
+                    setDefaultButton.textContent = originalText;
+                    setDefaultButton.classList.remove('bg-green-700');
+                }, 1500);
+            });
+
+            saveSetFrontBackButton.addEventListener('click', () => {
+                savedSetFrontBackVal1 = setFrontBackValue1.value;
+                savedSetFrontBackVal2 = setFrontBackValue2.value;
+
+                const originalText = saveSetFrontBackButton.textContent;
+                saveSetFrontBackButton.textContent = 'บันทึกสำเร็จ!';
+                saveSetFrontBackButton.classList.add('bg-green-700');
+                setTimeout(() => {
+                    saveSetFrontBackButton.textContent = originalText;
+                    saveSetFrontBackButton.classList.remove('bg-green-700');
+                }, 1500);
+            });
+
+            stopButton.addEventListener('click', () => appendCode('STOP();'));
+            delayButton.addEventListener('click', () => appendCode(`delay(${delayValueInput.value || '500'});`));
+            
+            ffx1Button.addEventListener('click', () => appendCode(`FF(${savedSpeed}, ${savedDelayX1}${getOptionalParamsFFBB()});`));
+            ffx2Button.addEventListener('click', () => appendCode(`FF(${savedSpeed}, ${savedDelayX2}${getOptionalParamsFFBB()});`));
+            ffx3Button.addEventListener('click', () => appendCode(`FF(${savedSpeed}, ${savedDelayX3}${getOptionalParamsFFBB()});`));
+            ffx4Button.addEventListener('click', () => appendCode(`FF(${savedSpeed}, ${savedDelayX4}${getOptionalParamsFFBB()});`));
+            bbx1Button.addEventListener('click', () => appendCode(`BB(${savedSpeed}, ${savedDelayX1}${getOptionalParamsFFBB()});`));
+            bbx2Button.addEventListener('click', () => appendCode(`BB(${savedSpeed}, ${savedDelayX2}${getOptionalParamsFFBB()});`));
+            bbx3Button.addEventListener('click', () => appendCode(`BB(${savedSpeed}, ${savedDelayX3}${getOptionalParamsFFBB()});`));
+            bbx4Button.addEventListener('click', () => appendCode(`BB(${savedSpeed}, ${savedDelayX4}${getOptionalParamsFFBB()});`));
+            
+            setFrontButton.addEventListener('click', () => {
+                if (!savedSetFrontBackVal1) { alert('กรุณากดบันทึกค่าสำหรับ SetFront/Back ก่อน'); return; }
+                let command = savedSetFrontBackVal2 ? `SetFront(${savedSetFrontBackVal1}, ${savedSetFrontBackVal2}${getOptionalParamsSet()});` : `SetFront(${savedSetFrontBackVal1}${getOptionalParamsSet()});`;
+                appendCode(command);
+            });
+            setBackButton.addEventListener('click', () => {
+                if (!savedSetFrontBackVal1) { alert('กรุณากดบันทึกค่าสำหรับ SetFront/Back ก่อน'); return; }
+                let command = savedSetFrontBackVal2 ? `SetBack(${savedSetFrontBackVal1}, ${savedSetFrontBackVal2}${getOptionalParamsSet()});` : `SetBack(${savedSetFrontBackVal1}${getOptionalParamsSet()});`;
+                appendCode(command);
+            });
+            
+            spinLeftButton.addEventListener('click', () => appendCode('spinDegree(-90);'));
+            spinRightButton.addEventListener('click', () => appendCode('spinDegree(90);'));
+            turnFrontLeftButton.addEventListener('click', () => appendCode('turnDegreeFront(-90);'));
+            turnFrontRightButton.addEventListener('click', () => appendCode('turnDegreeFront(90);'));
+            turnBackLeftButton.addEventListener('click', () => appendCode('turnDegreeBack(-90);'));
+            turnBackRightButton.addEventListener('click', () => appendCode('turnDegreeBack(90);'));
+            
+            dropFButton.addEventListener('click', () => appendCode('DropF();'));
+            dropBButton.addEventListener('click', () => appendCode('DropB();'));
+
+            copyButton.addEventListener('click', () => {
+                if (!codeOutput.value) return;
+                navigator.clipboard.writeText(codeOutput.value).then(() => {
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/></svg> คัดลอกแล้ว!`;
+                    setTimeout(() => { copyButton.innerHTML = originalText; }, 2000);
+                }).catch(err => { console.error('ไม่สามารถคัดลอกได้: ', err); codeOutput.select(); document.execCommand('copy'); });
+            });
+
+            clearButton.addEventListener('click', () => {
+                if (!activeFilename) {
+                    if (confirm('ไม่ได้เลือกไฟล์อยู่ คุณต้องการล้างเนื้อหาทั้งหมดหรือไม่?')) {
+                        codeOutput.value = '';
+                    }
+                    return;
+                }
+                
+                const funcName = activeFilename.replace('.ino', '').replace(/^_/, '').replace(/^[A-Z]\./, '');
+                if (confirm(`คุณต้องการล้างโค้ดภายในฟังก์ชัน ${funcName}() ใช่หรือไม่? (ตัวฟังก์ชันจะไม่ถูกลบ)`)) {
+                    const fullText = codeOutput.value;
+                    const regex = new RegExp(`(void\\s+${funcName}\\s*\\(\\s*\\)\\s*\\{)([\\s\\S]*?)(\\})`);
+                    const match = fullText.match(regex);
+                    
+                    if (match) {
+                        const functionStart = match[1];
+                        const functionEnd = match[3];
+                        codeOutput.value = fullText.replace(regex, functionStart + '\n' + functionEnd);
+                        logMessage(`Content of ${funcName}() cleared.`, 'success');
+                    } else {
+                        logMessage(`Could not find function ${funcName}() to clear.`, 'error');
+                        if (confirm(`ไม่พบฟังก์ชัน ${funcName}(), ต้องการล้างทั้งไฟล์แทนหรือไม่?`)) {
+                            codeOutput.value = '';
+                        }
+                    }
+                }
+            });
+            
+            saveButton.addEventListener('click', async () => {
+                const content = codeOutput.value;
+                if (content.trim() === '' && !activeFilename) {
+                    alert('ไม่มีโค้ดให้บันทึก');
+                    return;
+                }
+
+                let filenameToSave = activeFilename;
+                if (!filenameToSave) {
+                    filenameToSave = prompt("กรุณาตั้งชื่อไฟล์ (เช่น mission.ino):", "new_mission.ino");
+                    if (!filenameToSave) { return; }
+                }
+                
+                if (!filenameToSave.toLowerCase().endsWith('.ino')) {
+                    filenameToSave += '.ino';
+                }
+
+                try {
+                    logMessage(`Saving file '${filenameToSave}'...`);
+                    const response = await fetch(`${serverUrl}/files/${filenameToSave}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: content })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        logMessage(result.message, 'success');
+                        if (!activeFilename || activeFilename !== filenameToSave) {
+                        await loadFilesFromServer(); 
+                        setTimeout(() => {
+                            const newTab = document.querySelector(`[data-filename="${filenameToSave}"]`);
+                            if(newTab) newTab.click();
+                        }, 100);
+                        }
+                    } else {
+                        throw new Error(result.error || 'Unknown error');
+                    }
+                } catch (error) {
+                    console.error("Save error:", error);
+                    logMessage(`Failed to save file: ${error.message}`, 'error');
+                }
+            });
+            
+            uploadButton.addEventListener('click', async () => {
+                const selectedPort = portSelector.value;
+
+                if (!activeFilename) {
+                    alert('กรุณาเลือกไฟล์หลัก (Main Sketch) ที่ต้องการจะอัปโหลดก่อนครับ');
+                    return;
+                }
+                if (!selectedPort || selectedPort === "") {
+                    alert('กรุณาเลือก Port ที่เชื่อมต่อกับบอร์ดก่อนครับ');
+                    return;
+                }
+
+                logOutput.innerHTML = '';
+                logMessage(`Uploading '${activeFilename}' to ${selectedPort}...`);
+                loadingSpinner.style.display = 'flex';
+                uploadButton.disabled = true;
+
+                try {
+                    const response = await fetch(`${serverUrl}/upload`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            filename: activeFilename, 
+                            port: selectedPort 
+                        })
+                    });
+
+                    const result = await response.json();
+                    const formattedMessage = result.message.replace(/\n/g, '<br>');
+
+                    if (response.ok && result.success) {
+                        logMessage('--- Upload Success ---', 'success');
+                        logMessage(formattedMessage);
+                        logMessage('--- End of Log ---', 'success');
+                    } else {
+                        throw new Error(formattedMessage || 'Unknown upload error');
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    logMessage('--- Upload Failed ---', 'error');
+                    logMessage(error.message, 'error');
+                    logMessage('--- End of Log ---', 'error');
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                    uploadButton.disabled = false;
+                }
+            });
+
+            fetchAndPopulatePorts();
+            loadFilesFromServer();
+        });
+    </script>
+</body>
+</html>
