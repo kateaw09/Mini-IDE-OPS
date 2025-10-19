@@ -1,24 +1,43 @@
 {
+  "name": "mini_ide",
+  "version": "1.0.0",
+  "description": "Mini IDE OPS - Node.js webapp with Express and SerialPort",
+  "author": "",
+  "license": "ISC",
+  "main": "server.js",
+  "bin": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "npx pkg .",
+    "build:win": "npx pkg . -t node18-win-x64 -o dist/mini_ide-win.exe",
+    "build:linux": "npx pkg . -t node18-linux-x64 -o dist/mini_ide-linux",
+    "build:mac": "npx pkg . -t node18-macos-x64 -o dist/mini_ide-macos"
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.14",
     "@tailwindcss/postcss": "^4.1.14",
+    "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "multer": "^2.0.2",
     "serialport": "^13.0.0"
   },
-  "scripts": {
-    "start": "node server.js"
-  },
-  "name": "mini_ide",
-  "version": "1.0.0",
-  "main": "server.js",
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "pkg": {
+    "assets": [
+      "src/**/*",
+      "node_modules/@serialport/bindings-cpp/prebuilds/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
+    ],
+    "outputPath": "dist"
+  },
+  "keywords": []
 }
