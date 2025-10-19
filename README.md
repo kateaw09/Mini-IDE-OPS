@@ -22,7 +22,7 @@ Middle ระดับกลาง:
 
 | เวอร์ชั่น | ลิงก์ดาวน์โหลด |
 | :---- | :---- |
-| 🖥️ **Windows 0.1-alpha** | **[mini-ide-win.exe](https://github.com/kateaw09/Mini-IDE-OPS/releases/download/Middle/mini-ide-win.exe)** |
+| 🖥️ **Windows 0.1-alpha** | **[mini-ide-win.exe](https://github.com/kateaw09/Mini-IDE-OPS/releases/download/Middle/mini_ide-win.exe)** |
 | 🍏 **MacOS 0.1-alpha** | **[mini-ide-macos](https://github.com/kateaw09/Mini-IDE-OPS/releases/download/Middle/mini_ide-macos)** |
 | 🐧 **Linux 0.1-alpha** | **[mini-ide-linux](https://github.com/kateaw09/Mini-IDE-OPS/releases/download/Middle/mini_ide-linux)** |
 | ⛓️‍💥 **All version** | **[mini-ide](https://github.com/kateaw09/Mini-IDE-OPS/releases/tag/Middle)** |
@@ -44,5 +44,6 @@ High ระดับสูง:
 3. **เลือกพอร์ต:** โปรแกรมจะค้นหาพอร์ตที่เชื่อมต่ออยู่ ให้เลือกพอร์ตของบอร์ด Arduino  
 4. **เขียนโค้ด:** เขียนหรืออัปโหลดไฟล์ .ino ของคุณใน Code Editor  
 5. **อัปโหลด:** กดปุ่ม "Compile & Upload" เพื่อส่งโค้ดไปยังบอร์ด
+
 
 
