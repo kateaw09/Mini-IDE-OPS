@@ -1,147 +1,77 @@
 const express = require('express');
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
-const cors = require('cors');
-const { exec } = require('child_process');
-const os = require('os');
-const { SerialPort } = require('serialport');
+const cors = require('cors'); // Import cors middleware
 
+// Initialize the Express application
 const app = express();
 const port = 3000;
 
-const srcDir = path.join(__dirname, 'src');
-const codeDir = path.join(__dirname, 'src', 'Code');
-
-app.use(cors());
-app.use(express.json());
-app.use(express.static(srcDir));
-
-const ARDUINO_CLI_PATH = path.join(__dirname, 'arduino-cli');
-const FQBN = 'pt-robotics:esp32:PTBOT\_ESP32';
+// --- Middleware ---
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(express.text()); // Middleware to parse plain text body
+app.use(express.static(__dirname)); // Serve static files like ide.html
 
 
-app.get('/api/ports', async (req, res) => {
-    try {
-        const ports = await SerialPort.list();
-        res.json(ports.map(port => port.path));
-    } catch (err) {
-        console.error("Error listing serial ports:", err);
-        res.status(500).json({ error: 'Could not list serial ports.' });
-    }
-});
+// --- API Endpoints ---
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(srcDir, 'index.html'));
-});
-
-app.get('/files', async (req, res) => {
-    try {
-        const files = await fs.readdir(codeDir);
+// Endpoint to get the list of .ino files
+app.get('/files', (req, res) => {
+    fs.readdir(__dirname, (err, files) => {
+        if (err) {
+            console.error("Error reading directory:", err);
+            return res.status(500).json({ error: "Could not read directory" });
+        }
         const inoFiles = files.filter(file => path.extname(file).toLowerCase() === '.ino');
         res.json(inoFiles);
-    } catch (err) {
-        console.error("Error reading code directory:", err);
-        res.status(500).json({ error: "Could not read code directory" });
-    }
+    });
 });
 
-app.get('/files/:filename', async (req, res) => {
+// Endpoint to get the content of a specific file
+app.get('/files/:filename', (req, res) => {
     const filename = req.params.filename;
+    // Security check to prevent directory traversal
     if (filename.includes('..') || filename.includes('/')) {
         return res.status(400).send("Invalid filename.");
     }
-    const filePath = path.join(codeDir, filename);
-    try {
-        const data = await fs.readFile(filePath, 'utf8');
+    const filePath = path.join(__dirname, filename);
+
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error(`Error reading file ${filename}:`, err);
+            return res.status(404).send("File not found.");
+        }
         res.type('text/plain').send(data);
-    } catch (err) {
-        res.status(404).send("File not found.");
-    }
+    });
 });
 
-app.post('/files/:filename', async (req, res) => {
+// Endpoint to save (overwrite) a file
+app.post('/files/:filename', (req, res) => {
     const filename = req.params.filename;
+    // Security check
     if (filename.includes('..') || filename.includes('/')) {
         return res.status(400).send("Invalid filename.");
     }
-    const { content } = req.body;
-    if (typeof content !== 'string') {
-        return res.status(400).json({ error: "Invalid request body. Expecting { \"content\": \"...\" }" });
-    }
-    const filePath = path.join(codeDir, filename);
-    try {
-        await fs.writeFile(filePath, content, 'utf8');
+    const filePath = path.join(__dirname, filename);
+    const content = req.body;
+
+    fs.writeFile(filePath, content, 'utf8', (err) => {
+        if (err) {
+            console.error(`Error saving file ${filename}:`, err);
+            return res.status(500).json({ error: `Could not save file ${filename}` });
+        }
+        console.log(`File '${filename}' was successfully saved.`);
         res.json({ message: `File '${filename}' saved successfully.` });
-    } catch (err) {
-        res.status(500).json({ error: `Could not save file ${filename}` });
-    }
+    });
 });
 
-app.post('/upload', async (req, res) => {
-    // 1. รับชื่อไฟล์หลักและ port จาก JSON body
-    const { filename: mainSketchFile, port: selectedPort } = req.body; // <--- รับ port เพิ่ม
 
-    if (!mainSketchFile || !mainSketchFile.endsWith('.ino')) {
-        return res.status(400).json({ success: false, message: 'Invalid or missing sketch filename.' });
-    }
-    if (!selectedPort) {
-        return res.status(400).json({ success: false, message: 'Port not selected.' });
-    }
-
-    let tempSketchDir;
-    try {
-        const tempDirPrefix = path.join(os.tmpdir(), 'arduino-sketch-');
-        tempSketchDir = await fs.mkdtemp(tempDirPrefix);
-        const tempSketchFileName = path.basename(tempSketchDir) + '.ino';
-        const tempSketchPath = path.join(tempSketchDir, tempSketchFileName);
-
-        const allFiles = await fs.readdir(codeDir);
-        const inoFiles = allFiles.filter(file => file.endsWith('.ino'));
-        const otherInoFiles = inoFiles.filter(f => f !== mainSketchFile);
-
-        let combinedCode = '';
-        for (const file of otherInoFiles) {
-            const content = await fs.readFile(path.join(codeDir, file), 'utf8');
-            combinedCode += content + '\n\n';
-        }
-        const mainContent = await fs.readFile(path.join(codeDir, mainSketchFile), 'utf8');
-        combinedCode += mainContent;
-
-        await fs.writeFile(tempSketchPath, combinedCode, 'utf8');
-
-        console.log('--- Starting Arduino CLI Upload ---');
-        console.log(`Board: ${FQBN}`);
-        console.log(`Port: ${selectedPort}`); // <--- ใช้ port ที่รับมา
-        console.log(`Temporary Sketch Path: ${tempSketchDir}`);
-
-        const command = `${ARDUINO_CLI_PATH} compile --upload -p ${selectedPort} --fqbn ${FQBN} "${tempSketchDir}"`;
-
-        const execPromise = new Promise((resolve, reject) => {
-            exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`Exec error: ${error.message}`);
-                    reject({ success: false, message: `Compilation/Upload Failed:\n${stderr}\n${stdout}` });
-                    return;
-                }
-                resolve({ success: true, message: `Upload successful!\n${stdout}` });
-            });
-        });
-
-        const result = await execPromise;
-        res.json(result);
-    } catch (error) {
-        console.error("An error occurred during the upload process:", error);
-        res.status(500).json(error.message ? { success: false, message: error.message } : error);
-    } finally {
-        if (tempSketchDir) {
-            await fs.rm(tempSketchDir, { recursive: true, force: true });
-            console.log(`Cleaned up temporary directory: ${tempSketchDir}`);
-        }
-    }
-});
-
+// --- Start the server ---
 app.listen(port, () => {
     console.log("--- Simple IDE Server (Node.js) ---");
-    console.log(`- Server is ready at: http://localhost:${port}`);
+    console.log("Starting server...");
+    console.log("1. Make sure this script, ide.html, and all .ino files are in the same folder.");
+    console.log(`2. Open your web browser and go to: http://localhost:${port}`);
     console.log("-------------------------------------");
 });
+
