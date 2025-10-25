@@ -1,6 +1,6 @@
 {
-  "name": "mini_ide",
-  "version": "1.0.0",
+  "name": "mini_ide-m",
+  "version": "1.0.1 alpha",
   "description": "Mini IDE OPS - Node.js webapp with Express and SerialPort",
   "author": "",
   "license": "ISC",
@@ -9,9 +9,9 @@
   "scripts": {
     "start": "node server.js",
     "build": "npx pkg .",
-    "build:win": "npx pkg . -t node18-win-x64 -o dist/mini_ide-win.exe",
-    "build:linux": "npx pkg . -t node18-linux-x64 -o dist/mini_ide-linux",
-    "build:mac": "npx pkg . -t node18-macos-x64 -o dist/mini_ide-macos"
+    "build:win": "npx pkg . -t node18-win-x64 -o dist/mini_ide-m-win.exe",
+    "build:linux": "npx pkg . -t node18-linux-x64 -o dist/mini_ide-m-linux",
+    "build:mac": "npx pkg . -t node18-macos-x64 -o dist/mini_ide-m-macos"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.14",
@@ -30,7 +30,8 @@
   "pkg": {
     "assets": [
       "src/**/*",
-      "node_modules/@serialport/bindings-cpp/prebuilds/**/*"
+      "node_modules/@serialport/bindings-cpp/prebuilds/**/*",
+      "arduino-cli*"
     ],
     "targets": [
       "node18-win-x64",

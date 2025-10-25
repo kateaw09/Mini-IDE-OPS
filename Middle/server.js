@@ -13,11 +13,15 @@ const app = express();
 const port = 3000;
 
 const srcDir = path.join(__dirname, 'src');
-const codeDir = path.join(__dirname, 'src', 'ArduinoFiles');
+
+// สร้างไดเรกทอรีที่เขียนได้ในโฟลเดอร์ home ของผู้ใช้
+const userDataDir = path.join(os.homedir(), 'Mini_IDE_Files'); 
+const codeDir = path.join(userDataDir, 'ArduinoFiles');
 
 if (!fsSync.existsSync(codeDir)) {
     fsSync.mkdirSync(codeDir, { recursive: true });
 }
+// --- จบส่วนที่แก้ไข ---
 
 app.use(cors());
 app.use(express.json());
@@ -170,7 +174,7 @@ app.post('/upload', (req, res) => {
     fs.mkdtemp(path.join(os.tmpdir(), `${path.basename(filename, '.ino')}-`))
         .then(folder => {
             tempSketchDir = folder;
-            const sourceFilePath = path.join(codeDir, filename);
+            const sourceFilePath = path.join(codeDir, filename); // คัดลอกจาก codeDir
             const tempFilePath = path.join(tempSketchDir, filename);
             return fs.copyFile(sourceFilePath, tempFilePath);
         })
